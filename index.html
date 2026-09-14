@@ -8,24 +8,25 @@
 <!--
   Agora — Rebuild 2 mockup.
 
-  A scripted walkthrough of the prototype, in four screens:
+  Four screens:
 
-    01  SOURCE        paste a proposition; claims, standing and a proposed
-                      panel are produced before anyone speaks
-    02  DELIBERATION  the panel argues with sourced claims; audience comments
-                      cluster into a question that pauses the panel; a
-                      participant changes position and records why; a missing
-                      perspective is detected and voted in
-    03  SYNTHESIS     the output is the map, not the transcript
-    04  TAXONOMY      every open dispute classified by what could resolve it
+    01  SOURCE        a proposition goes in; claims, standing and a proposed
+                      panel come out, before anyone has spoken
+    02  DELIBERATION  the panel argues, with sources. Audience comments pile
+                      up and cluster into a question, which stops the panel
+                      until they answer it. Maya changes her mind and the
+                      reason gets recorded. Nobody is covering minerals, so
+                      the audience votes someone in who can.
+    03  SYNTHESIS     where the argument got to
+    04  TAXONOMY      each open dispute sorted by what could settle it
 
-  It plays on one clock and you can stop it. HOLD PACE pauses; the scrub below
-  the frame moves it; the screen buttons jump.
+  One clock runs the whole thing. HOLD PACE stops it, the scrub moves it, the
+  four buttons jump.
 
-  The sample source is a composed excerpt, labelled as such on the page. The
-  subject is a real and live dispute, but the panel are constructed personas
-  with explicit mandates, not simulations of real individuals, and the
-  quotations are invented. Nothing here is a record of anything anyone said.
+  The subject is real. The source excerpt is not: it was written for the demo
+  and the page labels it SAMPLE SOURCE. So are the six panellists, their
+  arguments, their citations, the comment counts and the vote. Nobody said any
+  of this.
 -->
 <style>
 :root{
@@ -296,7 +297,7 @@ body{
 
   <div class="pagebar">
     <h1>Agora</h1>
-    <span class="sub">Rebuild 2 mockup &mdash; a scripted walkthrough, four screens</span>
+    <span class="sub">Rebuild 2 mockup. Four screens. It plays itself and you can stop it.</span>
     <button class="btn" id="theme" type="button">Dark</button>
   </div>
 
@@ -355,14 +356,12 @@ body{
   </div>
 
   <p class="foot">
-    <strong>This is a visual mockup. It is not a working system.</strong> Nothing is analysed,
-    retrieved or generated &mdash; every screen is a scripted animation that does the same thing at
-    the same second every time.<br><br>
-    The sample source is a composed excerpt, labelled as such on the page. The subject is a real
-    and live dispute; the panel are constructed personas with explicit mandates, not simulations of
-    real individuals, and their arguments, sources and quotations are invented. Nothing here is a
-    record of anything anyone said.<br><br>
-    Built in 48 hours at <strong>Rebuild 2</strong>, Helsinki, 30 August &ndash; 1 September 2026.
+    <strong>This is a mockup.</strong> Nothing here analyses anything. Every screen is a script,
+    and it does the same thing at the same second every time.<br><br>
+    The subject is real. The source excerpt is not: it was written for the demo, and the page
+    labels it SAMPLE SOURCE. So are the six panellists, their arguments, their citations, the
+    comment counts and the vote. Nobody said any of this.<br><br>
+    Built in 48 hours at <strong>Rebuild 2</strong>, Helsinki, 30 August to 1 September 2026.
     Part of <a href="https://github.com/rebuild-digital/Rebuild-2-Prototypes">rebuild-digital/Rebuild-2-Prototypes</a>.
   </p>
 
@@ -740,7 +739,7 @@ body{
   br.appendChild(backBtn);
   br.appendChild(el('span', 'lbl', 'Synthesis · 9 contributions · 117 comments · 13 sources'));
   mapBody.appendChild(br);
-  mapBody.appendChild(fade(el('h2', 'maptitle', 'The output is the map, not the transcript.'), 0.5));
+  mapBody.appendChild(fade(el('h2', 'maptitle', 'Where the argument got to.'), 0.5));
 
   var statwrap = el('div', 'stats');
   STATS.forEach(function (s, i) {

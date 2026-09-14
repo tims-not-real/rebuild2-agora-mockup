@@ -1,81 +1,78 @@
 # Agora — Rebuild 2 mockup
 
-**This is a visual mockup. It is not a working system.** Nothing is analysed, retrieved or
-generated. Every screen is a scripted animation that does the same thing at the same second every
-time.
+**This is a mockup.** Nothing here analyses anything. Every screen is a script that does the same
+thing at the same second every time.
 
 Open [`index.html`](index.html). No server, no install, no build.
 
 ## What Agora is
 
-*A living map of disagreement.*
+Agora takes an article, a ruling, a paper or a strategy memo and does a lot of work on it before
+anyone is allowed to speak. It pulls out the claims and the open questions. It works out who has
+standing, splitting that into the people the outcome lands on and the people worth asking because
+of what they know. Then it proposes a panel, and writes down each member's mandate in advance so
+you can hold them to it.
 
-Agora takes any article, ruling, paper or strategy memo and, before anyone speaks, extracts its
-claims and open questions, maps who has standing — those affected by the outcome and those
-invited for expertise — then proposes a panel of constructed personas, each with an explicit
-mandate. In the deliberation that follows, every argument carries its sources, audience comments
-cluster into questions that pause the panel, and when a participant changes position the revision
-is recorded with the reason.
+Then the panel argues. Arguments carry their sources. Audience comments pile up and get clustered
+into questions, and a question with enough weight behind it stops the panel until they deal with
+it. When somebody changes their mind, what changed it gets recorded next to the change.
 
-The output is not the transcript. It is a map of what the disagreement actually is.
+What comes out at the end is a map of the argument rather than a recording of it. Some of the
+disagreements turn out to be about facts, and somebody could go and check. Most of them do not.
 
 ## The four screens
 
-The page plays through them on one clock. `❙❙ Hold pace` stops it, the scrub moves it, and the
-four buttons jump straight to a screen.
+It plays through them on one clock. `❙❙ Hold pace` stops it, the scrub moves it, and the four
+buttons jump straight to a screen. Paused, the columns scroll normally.
 
 | | |
 |---|---|
-| **01 · Source** | A proposition is pasted. Claims, questions and forecasts are extracted, standing is split into *affected by outcome* and *invited for expertise*, and a panel of five is proposed — each with a one-line mandate. Nobody has spoken yet. |
-| **02 · Deliberation** | The panel argues. Every contribution carries a claim, a source count and a strength meter. At 14:11 thirty-seven audience comments cluster into a question and **the panel is paused** to answer it. Maya then changes position and the revision is recorded with who moved her. A **perspective gap** is detected — minerals are being discussed and nobody represents resource economics — and the audience votes a new participant in, 214 to 38. |
-| **03 · Synthesis** | *"The output is the map, not the transcript."* Three areas of agreement, each traced back to the timestamps that produced it. Four disagreements that remain fundamental. Two factual questions still open, with who owes the answer. |
-| **04 · Taxonomy** | Every open dispute classified by what could resolve it: **factual** (evidence settles it), **forecast** (time settles it), **value** and **interest conflict** (nothing settles them). |
+| **01 · Source** | A proposition goes in. Claims, questions and a forecast come out, standing is mapped, and five panellists are proposed with a mandate each. Nobody has spoken yet. |
+| **02 · Deliberation** | The panel argues, and every contribution carries a claim, a source count and a confidence meter. At 14:11 thirty-seven audience comments cluster into one question and the panel stops to answer it. Maya then changes her position, and the record says who moved her. Minerals keep coming up and nobody on the panel knows anything about minerals, so the audience votes an economist in, 214 to 38. |
+| **03 · Synthesis** | Where the argument got to. Three things everyone now agrees on, each traced back to the timestamps that produced it. Four that are still live. Two factual questions nobody has gone and answered, with whose job it is. |
+| **04 · Taxonomy** | Each open dispute sorted by what could settle it: evidence, time, or nothing. |
 
 ## About the sample source
 
-The subject is a real and live dispute — US pressure on Greenland's status, the 1951 defence
-agreement as amended at Igaliku in 2004, Pituffik, the 2009 Self-Government Act. Those things are
-real and the argument is written to respect them.
+The subject is real. US pressure on Greenland's status, the 1951 defence agreement as amended at
+Igaliku in 2004, Pituffik, the 2009 Self-Government Act — those are all real, and the arguments
+are written to respect them.
 
-**Everything else is invented.** The source excerpt is composed and labelled `SAMPLE SOURCE` on
-the page; it is not a report by any news organisation. The six panellists are constructed
-personas with explicit mandates, not simulations of real individuals. Their arguments, their
-citations, the comment counts and the vote are all fabricated for the mockup. Nothing here is a
-record of anything anyone said.
+The source excerpt is not real. It was written for the demo, and the page labels it
+`SAMPLE SOURCE`. No news organisation published it. The six panellists are invented too, along
+with their arguments, their citations, the comment counts and the vote. Nobody said any of this.
 
 ## Where it came from
 
-Agora was one of six prototypes built in 48 hours at **Rebuild 2** in Helsinki, 30 August –
+Agora was one of six prototypes built in 48 hours at **Rebuild 2** in Helsinki, 30 August to
 1 September 2026. The prototypes are collected at
 [rebuild-digital/Rebuild-2-Prototypes](https://github.com/rebuild-digital/Rebuild-2-Prototypes).
 
 Designed at Rebuild 2 by **Tim, Mikko, Ruggero and Lorenz**.
 
-This repo rebuilds the prototype as a single standalone page. The original was published as a
-hosted artifact; what survived of it were seven DOM snapshots taken at different moments of the
-walkthrough. Those were the reference — the layout, the copy, the palette and the sequence come
-from them, the code does not.
+The original was a hosted artifact rather than a repo. What survived of it were seven DOM
+snapshots taken at different points in the walkthrough, and those are what this was rebuilt from.
+The layout, the copy, the palette and the sequence come from the snapshots. None of the code does.
 
-## Stack
+## How it is put together
 
-One self-contained HTML file. Inline CSS, vanilla JavaScript, no dependencies and no build step.
+One HTML file. Inline CSS, vanilla JavaScript, nothing fetched over the network, nothing to build.
 
-A framework would have bought a `node_modules` and a lockfile to go stale in exchange for
-nothing: this is a fixed-script walkthrough with no data and no interaction beyond the transport
-controls. A single file also stays runnable years from now, which matters more for an archived
-artefact than for a product.
+There was nothing here for a framework to do. It is a fixed script with no data and no interaction
+beyond the transport controls, so a build step would only have added something else to go stale.
+The repo is also an archive rather than a living project, and a single file will still open in ten
+years.
 
-Three things worth naming:
+The whole walkthrough is one number: a time `T` in seconds, and a function from `T` to a frame.
+Nothing accumulates, so the scrub can land anywhere and the frame is still correct, and re-timing
+the piece means changing numbers rather than logic.
 
-- **One clock.** The whole walkthrough is a single time `T` in authored seconds and a pure
-  function from `T` to a frame. Nothing accumulates state, so the scrub can jump anywhere and the
-  frame is always right. Re-timing it means editing numbers, not code.
-- **Panes scroll, and stop fighting you.** Each column auto-scrolls only far enough to bring the
-  newest revealed element into view, and only while playing — so the top of a screen stays
-  readable until it has to move, and a paused viewer can scroll wherever they like.
-- **Fonts are named, not fetched.** Inter and IBM Plex Mono are named first in the stack with
-  system fallbacks behind them. The page loads nothing over the network, so it works offline and
-  from a file path; where those faces are not installed it falls back and stays legible.
+The columns auto-scroll, but only far enough to bring the newest thing into view, and only while
+it is playing. Once you pause it they stop moving on their own.
+
+Inter and IBM Plex Mono are named first in the font stack with system fallbacks behind them,
+rather than loaded. The page works offline and off a file path, and if you do not have those faces
+installed it still reads fine.
 
 ## Licence
 
