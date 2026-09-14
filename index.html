@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agora — a living map of disagreement</title>
+<meta name="description" content="Agora takes a proposition to a deliberately composed panel: claims extracted, standing mapped, arguments sourced, disagreements classified by what could resolve them. Rebuild 2 mockup.">
+<!--
+  Agora — Rebuild 2 mockup.
+
+  A scripted walkthrough of the prototype, in four screens:
+
+    01  SOURCE        paste a proposition; claims, standing and a proposed
+                      panel are produced before anyone speaks
+    02  DELIBERATION  the panel argues with sourced claims; audience comments
+                      cluster into a question that pauses the panel; a
+                      participant changes position and records why; a missing
+                      perspective is detected and voted in
+    03  SYNTHESIS     the output is the map, not the transcript
+    04  TAXONOMY      every open dispute classified by what could resolve it
+
+  It plays on one clock and you can stop it. HOLD PACE pauses; the scrub below
+  the frame moves it; the screen buttons jump.
+
+  The sample source is a composed excerpt, labelled as such on the page. The
+  subject is a real and live dispute, but the panel are constructed personas
+  with explicit mandates, not simulations of real individuals, and the
+  quotations are invented. Nothing here is a record of anything anyone said.
+-->
+<style>
+:root{
+  --paper:#ffffff;
+  --ink:#0b0b0c;
+  --accent:#1b34d8;
+  --tint:rgba(27,52,216,0.08);
+  --muted:rgba(11,11,12,0.45);
+  --muted2:rgba(11,11,12,0.62);
+  --hair:rgba(11,11,12,0.14);
+  --hair2:rgba(11,11,12,0.22);
+  --wash:rgba(11,11,12,0.028);
+  --alert:#b00020;
+  --page:#f4f4f2;
+  --sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#111113; --ink:#f2f1ee; --accent:#7d90ff; --tint:rgba(125,144,255,0.12);
+    --muted:rgba(242,241,238,0.45); --muted2:rgba(242,241,238,0.64);
+    --hair:rgba(242,241,238,0.16); --hair2:rgba(242,241,238,0.24);
+    --wash:rgba(242,241,238,0.04); --alert:#ff7a8a; --page:#0a0a0b;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#111113; --ink:#f2f1ee; --accent:#7d90ff; --tint:rgba(125,144,255,0.12);
+  --muted:rgba(242,241,238,0.45); --muted2:rgba(242,241,238,0.64);
+  --hair:rgba(242,241,238,0.16); --hair2:rgba(242,241,238,0.24);
+  --wash:rgba(242,241,238,0.04); --alert:#ff7a8a; --page:#0a0a0b;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;background:var(--page);color:var(--ink);
+  font-family:var(--sans);-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 20px 44px}
+.mono{font-family:var(--mono)}
+.lbl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- page chrome ---------- */
+.pagebar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.pagebar h1{margin:0;font-size:15px;font-weight:600;letter-spacing:-.01em}
+.pagebar .sub{font-size:12.5px;color:var(--muted);margin-right:auto}
+.btn{
+  font:inherit;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);background:transparent;border:1px solid var(--hair);
+  border-radius:2px;padding:5px 11px;cursor:pointer;white-space:nowrap;
+  transition:color .15s,border-color .15s,background-color .15s;
+}
+.btn:hover{color:var(--ink);border-color:var(--hair2)}
+.btn[aria-current="true"]{color:var(--accent);border-color:var(--accent);background:var(--tint)}
+
+/* ---------- the app frame ---------- */
+.app{
+  background:var(--paper);border:1px solid var(--hair2);
+  height:660px;display:flex;flex-direction:column;overflow:hidden;
+}
+.apphead{
+  border-bottom:1px solid var(--hair);padding:12px 18px;flex:none;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.mark{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.32em}
+.headmid{margin-right:auto;min-width:0}
+.headtitle{font-size:13.5px;font-weight:600;letter-spacing:-.008em;line-height:1.3}
+.headmeta{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:3px}
+.tagline{font-size:12px;color:var(--muted)}
+.pace{
+  font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--muted);background:transparent;border:1px solid var(--hair);
+  border-radius:2px;padding:5px 10px;cursor:pointer;white-space:nowrap;
+}
+.pace:hover{color:var(--ink);border-color:var(--hair2)}
+.pace.held{color:var(--accent);border-color:var(--accent);background:var(--tint)}
+
+.appbody{flex:1;min-height:0;display:grid}
+.screen{display:none;min-height:0}
+.screen.on{display:grid}
+.pane{min-height:0;overflow-y:auto;overflow-x:hidden;scroll-behavior:auto}
+.paneinner{position:relative}
+
+/* ---------- screen 01: source ---------- */
+#s-source{grid-template-columns:minmax(0,1fr) 400px}
+#s-source .left{padding:26px 26px 24px;border-right:1px solid var(--hair);min-height:0;overflow:hidden}
+#s-source .right{min-height:0}
+.steplbl{margin-bottom:12px}
+.stephead{font-size:20px;font-weight:600;letter-spacing:-.022em;line-height:1.25;margin:0 0 10px;max-width:24ch}
+.stepbody{font-size:12.5px;line-height:1.6;color:var(--muted2);max-width:46ch;margin:0 0 18px}
+.ta{
+  border:1px solid var(--hair);background:var(--wash);padding:13px 14px;
+  font-family:var(--mono);font-size:11px;line-height:1.7;color:var(--ink);
+  height:172px;overflow:hidden;position:relative;
+}
+.ta .cur{display:inline-block;width:6px;height:12px;background:var(--accent);vertical-align:-1px;margin-left:1px}
+.runrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:16px}
+.run{
+  font:inherit;font-family:var(--sans);font-size:12px;font-weight:500;
+  background:var(--accent);color:#fff;border:1px solid var(--accent);
+  border-radius:2px;padding:9px 16px;cursor:pointer;transition:background-color .3s,border-color .3s;
+}
+.run.done{background:var(--ink);border-color:var(--ink)}
+.runnote{font-family:var(--mono);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
+.crumb{
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--accent);margin-top:14px;
+}
+.railsec{padding:18px 22px;border-bottom:1px solid var(--hair)}
+.railsec:last-child{border-bottom:0}
+.railhead{display:flex;align-items:baseline;gap:8px;margin-bottom:12px}
+.row{display:grid;grid-template-columns:62px 1fr;gap:0 12px;padding:9px 0;border-top:1px solid var(--hair)}
+.row:first-of-type{border-top:0}
+.tag{
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--accent);padding-top:2px;
+}
+.tag.q{color:var(--muted2)}
+.tag.f{color:var(--muted)}
+.rowtxt{font-size:12.5px;line-height:1.5}
+.twocol{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.stlist{list-style:none;margin:8px 0 0;padding:0}
+.stlist li{font-size:12px;line-height:1.5;padding:4px 0;color:var(--muted2)}
+.persona{padding:11px 0;border-top:1px solid var(--hair)}
+.persona:first-of-type{border-top:0}
+.pname{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.pname b{font-size:12.5px;font-weight:600}
+.ptag{font-family:var(--mono);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);border:1px solid var(--accent);padding:1px 5px}
+.ptag.x{color:var(--muted);border-color:var(--hair2)}
+.prole{font-size:11.5px;color:var(--muted);margin-top:3px}
+.pmandate{font-size:11.5px;color:var(--muted2);margin-top:4px;line-height:1.5}
+.disclaim{font-size:11px;line-height:1.55;color:var(--muted);padding:14px 22px;border-top:1px solid var(--hair)}
+.openroom{
+  display:block;width:calc(100% - 44px);margin:0 22px 20px;
+  font:inherit;font-family:var(--sans);font-size:12px;font-weight:500;text-align:left;
+  background:var(--accent);color:#fff;border:1px solid var(--accent);border-radius:2px;
+  padding:11px 14px;cursor:pointer;
+}
+
+/* ---------- screen 02: deliberation ---------- */
+#s-debate,#s-map,#s-tax{grid-template-columns:minmax(0,1fr) 268px}
+.feed{padding:0;min-height:0}
+.feedinner{padding:20px 24px 28px}
+.side{border-left:1px solid var(--hair);min-height:0}
+.sideinner{padding:18px 18px 24px}
+.sidesec{margin-bottom:22px}
+.sidesec:last-child{margin-bottom:0}
+.part{display:grid;grid-template-columns:24px 1fr 26px;gap:0 9px;align-items:center;padding:5px 0}
+.av{
+  width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:8.5px;font-weight:600;letter-spacing:.04em;
+  border:1px solid var(--hair2);color:var(--muted2);
+}
+.av.lit{border-color:var(--accent);color:var(--accent);background:var(--tint)}
+.pn{font-size:11.5px;line-height:1.35}
+.pn span{display:block;font-size:10px;color:var(--muted)}
+.pc{font-family:var(--mono);font-size:11px;text-align:right;color:var(--muted2);font-variant-numeric:tabular-nums}
+.issue{margin:10px 0 0}
+.issue .q{font-size:11.5px;line-height:1.45;margin-bottom:4px}
+.bar{display:flex;align-items:center;gap:8px}
+.bar i{display:block;height:5px;background:var(--accent);opacity:.75;transition:width .5s ease}
+.bar em{font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--muted);white-space:nowrap}
+.agree{display:grid;grid-template-columns:14px 1fr;gap:0 8px;padding:5px 0;font-size:11.5px;line-height:1.45;color:var(--muted2)}
+.agree b{color:var(--accent);font-weight:400}
+.unres{display:grid;grid-template-columns:14px 1fr;gap:0 8px;padding:5px 0;font-size:11.5px;line-height:1.45;color:var(--muted2)}
+.unres b{color:var(--alert);font-weight:400}
+.maplink{
+  font:inherit;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--accent);background:transparent;border:0;padding:0;cursor:pointer;
+}
+
+.entry{padding:16px 0;border-top:1px solid var(--hair)}
+.entry:first-child{border-top:0;padding-top:4px}
+.ehead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px}
+.ehead .who{font-size:12.5px;font-weight:600}
+.ehead .role{font-size:11px;color:var(--muted)}
+.ehead .ts{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--muted)}
+.etext{font-size:13px;line-height:1.62;max-width:66ch}
+.claimbox{border-left:2px solid var(--accent);background:var(--tint);padding:9px 12px;margin-top:11px}
+.claimbox .lbl{color:var(--accent);margin-bottom:4px;display:block}
+.claimbox .ct{font-size:12px;line-height:1.5}
+.srcrow{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+.src{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--muted2)}
+.dots{letter-spacing:.12em;color:var(--accent)}
+.attach{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:transparent;border:1px solid var(--hair);border-radius:2px;padding:3px 7px;cursor:pointer}
+.attach:hover{color:var(--ink);border-color:var(--hair2)}
+.attached{font-family:var(--mono);font-size:9.5px;color:var(--muted);margin-top:7px}
+
+.sys{border:1px solid var(--accent);padding:14px 16px;margin:16px 0 0;background:var(--tint)}
+.sys.warn{border-color:var(--alert);background:rgba(176,0,32,0.05)}
+.sys.flat{border-color:var(--hair2);background:var(--wash)}
+.syshead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.syshead .lbl{color:var(--accent)}
+.sys.warn .syshead .lbl{color:var(--alert)}
+.sys.flat .syshead .lbl{color:var(--muted2)}
+.sysq{font-size:14px;line-height:1.45;font-weight:600;letter-spacing:-.008em}
+.sysmeta{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+.sysbody{font-size:12.5px;line-height:1.55;color:var(--muted2);margin-top:7px}
+.viewrow{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}
+.view .lbl{display:block;margin-bottom:4px}
+.view p{margin:0;font-size:12px;line-height:1.5}
+.view.old p{color:var(--muted)}
+.because{font-size:11.5px;line-height:1.55;color:var(--muted2);margin-top:10px;padding-top:9px;border-top:1px solid var(--hair)}
+.invite{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:11px}
+.vbtn{font:inherit;font-family:var(--sans);font-size:11px;font-weight:500;border-radius:2px;padding:6px 13px;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:#fff}
+.vbtn.no{background:transparent;color:var(--muted2);border-color:var(--hair2)}
+.tally{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.tally.done{color:var(--accent)}
+.syn{
+  font:inherit;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  background:var(--ink);color:var(--paper);border:1px solid var(--ink);border-radius:2px;
+  padding:8px 13px;cursor:pointer;margin-top:11px;
+}
+
+/* ---------- screens 03 / 04 ---------- */
+.mapinner{padding:22px 26px 30px}
+.backrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.back{font:inherit;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);background:transparent;border:0;padding:0;cursor:pointer}
+.back:hover{color:var(--ink)}
+.maptitle{font-size:19px;font-weight:600;letter-spacing:-.02em;margin:0 0 18px;max-width:34ch}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:1px;background:var(--hair);border:1px solid var(--hair);margin-bottom:22px}
+.stat{background:var(--paper);padding:12px 14px}
+.stat b{display:block;font-size:22px;font-weight:600;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{display:block;font-size:10.5px;color:var(--muted);line-height:1.4;margin-top:4px}
+.mapsec{margin-bottom:22px}
+.mapsec:last-child{margin-bottom:0}
+.item{display:grid;grid-template-columns:16px 1fr;gap:0 10px;padding:10px 0;border-top:1px solid var(--hair)}
+.item .gl{font-size:12px;line-height:1.5;color:var(--accent)}
+.item .gl.warn{color:var(--alert)}
+.item .gl.q{color:var(--muted2)}
+.itt{font-size:13px;line-height:1.5}
+.itm{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:5px}
+.taxintro{font-size:12.5px;line-height:1.6;color:var(--muted2);max-width:62ch;margin:0 0 20px}
+.taxgrp{margin-bottom:20px}
+.taxgrp:last-child{margin-bottom:0}
+.taxhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:2px}
+.taxhead .k{font-family:var(--mono);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink)}
+.taxhead .v{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+
+/* ---------- mockup controls ---------- */
+.ctrls{display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap}
+.scrub{flex:1;min-width:150px;accent-color:var(--accent)}
+.cue{font-family:var(--mono);font-size:10px;color:var(--muted);min-width:15ch;text-align:right}
+.jump{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.foot{margin-top:26px;font-size:11.5px;color:var(--muted);line-height:1.65;max-width:78ch}
+.foot a{color:var(--muted)}
+.foot strong{color:var(--ink);font-weight:500}
+
+.fade{opacity:0;transform:translateY(6px);transition:opacity .45s ease,transform .45s ease}
+.fade.in{opacity:1;transform:none}
+
+@media (max-width:980px){
+  .app{height:auto;min-height:560px}
+  #s-source,#s-debate,#s-map,#s-tax{grid-template-columns:minmax(0,1fr)}
+  #s-source .left{border-right:0;border-bottom:1px solid var(--hair)}
+  .side{border-left:0;border-top:1px solid var(--hair)}
+  .pane{overflow:visible}
+  .feed,.side,#s-source .right{overflow:visible}
+  .viewrow{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .row{grid-template-columns:1fr;gap:4px}
+  .twocol{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="pagebar">
+    <h1>Agora</h1>
+    <span class="sub">Rebuild 2 mockup &mdash; a scripted walkthrough, four screens</span>
+    <button class="btn" id="theme" type="button">Dark</button>
+  </div>
+
+  <div class="app">
+    <div class="apphead">
+      <span class="mark">AGORA</span>
+      <span class="headmid" id="headmid"></span>
+      <button class="pace" id="pace" type="button">&#10073;&#10073; Hold pace</button>
+    </div>
+    <div class="appbody">
+
+      <section class="screen" id="s-source">
+        <div class="left">
+          <div class="lbl steplbl fade" data-t="0.6">Step 01 &middot; Source</div>
+          <h2 class="stephead fade" data-t="0.9">Give any proposition to a deliberately composed group of perspectives.</h2>
+          <p class="stepbody fade" data-t="1.4">Paste an article, ruling, paper, or strategy memo. Agora extracts the claims, maps who has standing, and proposes a panel before anyone speaks.</p>
+          <div class="ta fade" data-t="2.0"><span id="srctext"></span><span class="cur" id="srccur"></span></div>
+          <div class="runrow fade" data-t="2.6">
+            <button class="run" id="runbtn" type="button">Extract claims &amp; compose panel</button>
+            <span class="runnote">No participant speaks before the map exists</span>
+          </div>
+          <div class="crumb fade" data-t="5.2">Source &rarr; Claims &rarr; Standing &rarr; Panel</div>
+        </div>
+        <div class="right pane"><div class="paneinner" id="rail"></div></div>
+      </section>
+
+      <section class="screen" id="s-debate">
+        <div class="feed pane"><div class="paneinner feedinner" id="feed"></div></div>
+        <div class="side pane"><div class="paneinner sideinner" id="side1"></div></div>
+      </section>
+
+      <section class="screen" id="s-map">
+        <div class="pane"><div class="paneinner mapinner" id="mapbody"></div></div>
+        <div class="side pane"><div class="paneinner sideinner" id="side2"></div></div>
+      </section>
+
+      <section class="screen" id="s-tax">
+        <div class="pane"><div class="paneinner mapinner" id="taxbody"></div></div>
+        <div class="side pane"><div class="paneinner sideinner" id="side3"></div></div>
+      </section>
+
+    </div>
+  </div>
+
+  <div class="ctrls">
+    <button class="btn" id="play" type="button">Pause</button>
+    <input class="scrub" id="scrub" type="range" min="0" max="1000" value="0" aria-label="Scrub the walkthrough">
+    <span class="cue" id="cue">0.0s</span>
+  </div>
+
+  <div class="jump">
+    <button class="btn" data-jump="0" type="button">01 Source</button>
+    <button class="btn" data-jump="1" type="button">02 Deliberation</button>
+    <button class="btn" data-jump="2" type="button">03 Synthesis</button>
+    <button class="btn" data-jump="3" type="button">04 Taxonomy</button>
+  </div>
+
+  <p class="foot">
+    <strong>This is a visual mockup. It is not a working system.</strong> Nothing is analysed,
+    retrieved or generated &mdash; every screen is a scripted animation that does the same thing at
+    the same second every time.<br><br>
+    The sample source is a composed excerpt, labelled as such on the page. The subject is a real
+    and live dispute; the panel are constructed personas with explicit mandates, not simulations of
+    real individuals, and their arguments, sources and quotations are invented. Nothing here is a
+    record of anything anyone said.<br><br>
+    Built in 48 hours at <strong>Rebuild 2</strong>, Helsinki, 30 August &ndash; 1 September 2026.
+    Part of <a href="https://github.com/rebuild-digital/Rebuild-2-Prototypes">rebuild-digital/Rebuild-2-Prototypes</a>.
+  </p>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var clamp = function (v, lo, hi) { return v < lo ? lo : v > hi ? hi : v; };
+
+  /* ==================== content ==================== */
+
+  var SOURCE_TEXT =
+    'SAMPLE SOURCE — The US administration has revived a proposal to bring Greenland under ' +
+    'American sovereignty, citing Arctic early-warning coverage, sea-lane security and access to ' +
+    'critical minerals. Greenland’s premier restated that any change of status is a decision ' +
+    'for Greenlanders alone. Denmark called the existing Kingdom relationship and the 1951 ' +
+    'defence agreement sufficient for allied security needs.';
+
+  var EXTRACTED = [
+    ['claim', 'US strategic objectives in the Arctic require a change in Greenland’s sovereignty.'],
+    ['claim', 'Existing defence agreements already provide substantial US access to Greenland.'],
+    ['question', 'Who holds decision rights over Greenland’s political status?'],
+    ['question', 'Who controls the development of Greenlandic mineral resources?'],
+    ['forecast', 'US investment would substantially increase Greenlandic prosperity.']
+  ];
+
+  var STANDING = [
+    ['Affected by outcome', ['Greenlandic government / opposition', 'Greenlandic Inuit / civil society', 'United States', 'Denmark']],
+    ['Invited for expertise', ['Arctic security · NATO / Canada', 'Resource economics']]
+  ];
+
+  var PANEL = [
+    ['Jens Olsen', 'affected', 'Kalaallit civil society', 'advocate the strongest defensible case for self-determination.'],
+    ['Naja Kleist', 'affected', 'Greenlandic government', 'defend fiscal and diplomatic room to manoeuvre.'],
+    ['Maya Reynolds', 'affected', 'US security strategist', 'argue for maximal Arctic early-warning resilience.'],
+    ['Christian Hoëg', 'affected', 'Danish constitutional lawyer', 'hold the Kingdom relationship to its legal text.'],
+    ['Col. Sarah Whitcomb', 'expertise', 'Arctic security · NATO/Canada', 'test claims against alliance capability, not national interest.']
+  ];
+
+  var PEOPLE = [
+    ['JO', 'Jens', 'Kalaallit perspective', 15],
+    ['NK', 'Naja', 'Greenlandic government', 9],
+    ['MR', 'Maya', 'US security', 12],
+    ['CH', 'Christian', 'Danish constitutional', 9],
+    ['SW', 'Sarah', 'Arctic security', 7],
+    ['ER', 'Elena', 'Resource economics', 1]
+  ];
+
+  var ISSUES = [
+    ['Does US security require sovereignty?', 84, 1.0],
+    ['Are existing defence agreements sufficient?', 63, 0.76],
+    ['Can Greenland economically sustain independence?', 51, 0.62],
+    ['Who controls mineral development?', 29, 0.36]
+  ];
+
+  /* the deliberation, on its own clock (seconds from the start of screen 02) */
+  var FEED = [
+    { k:'entry', t:1.0, ini:'JO', who:'Jens Olsen', role:'Kalaallit civil society', ts:'14:02',
+      text:'Start with decision rights, not with radar. The Self-Government Act of 2009 recognises Greenlanders as a people under international law and gives Naalakkersuisut the right to initiate independence proceedings. No security argument made in Washington or Copenhagen changes who holds that right.',
+      claim:'Greenland’s Self-Government Act gives Naalakkersuisut the sole right to initiate a change of status.',
+      src:'3 SRC', dots:'●●●●●' },
+
+    { k:'entry', t:6.0, ini:'MR', who:'Maya Reynolds', role:'US security strategist', ts:'14:05',
+      text:'I accept that framing and still reach a different conclusion. Polar early-warning and space surveillance depend on infrastructure whose legal basis can be renegotiated by a government that is explicitly seeking independence. Capability that can be withdrawn is capability the planner cannot count on.',
+      claim:'Pituffik provides ballistic-missile early warning and space surveillance the US cannot replicate elsewhere in the Arctic.',
+      src:'3 SRC', dots:'●●●●○' },
+
+    { k:'entry', t:11.5, ini:'CH', who:'Christian Hoëg', role:'Danish constitutional lawyer', ts:'14:09',
+      text:'The premise that access is fragile is testable, and the text does not support it. The 1951 defence agreement, as amended at Igaliku in 2004, already grants the United States basing, overflight and installation rights without a transfer of sovereignty. Withdrawal requires notice and consultation, not a change of flag.',
+      claim:'Existing defence agreements already provide substantial US access to Greenland.',
+      src:'3 SRC', dots:'●●●●●' },
+
+    { k:'emerging', t:17.0, ts:'14:11',
+      q:'Does the US actually require sovereignty over Greenland to achieve its security objectives?',
+      meta:'37 audience comments clustered',
+      pause:'Panel paused · Maya and Sarah to respond' },
+
+    { k:'entry', t:22.5, ini:'SW', who:'Col. Sarah Whitcomb', role:'Arctic security · NATO/Canada', ts:'14:14',
+      text:'On the alliance question the audience is right to press. NORAD modernisation is being delivered through host-nation agreements in Canada, not through territorial acquisition. The capability gap Maya describes is real; the mechanism she proposes is not the one the alliance actually uses.',
+      claim:'Comparable Arctic early-warning capability is delivered through host-nation agreements without sovereignty transfer.',
+      src:'2 SRC', dots:'●●●●○' },
+
+    { k:'position', t:28.5, who:'Maya Reynolds · US security strategist',
+      old:'US sovereignty provides materially greater Arctic security than any agreement can.',
+      neu:'Expanded basing and tenure guarantees may provide most of the required capability.',
+      because:'Changed because: Christian supplied the treaty text on existing basing rights, and Sarah showed NORAD delivers equivalent capability through host-nation agreements. My red line is tenure, not title.' },
+
+    { k:'gap', t:34.0, vote:39.0,
+      body:'Mining and critical minerals have become a major part of the discussion — 29 audience comments and 6 contributions — but no participant currently represents resource economics.',
+      name:'Dr Elena Rossi', role:'Critical minerals economist',
+      mandate:'price the extraction case honestly, including the cases where it fails.' },
+
+    { k:'entry', t:41.5, ini:'ER', who:'Dr Elena Rossi', role:'Critical minerals economist', ts:'14:24',
+      text:'Both sides are overstating the minerals prize. Greenland has confirmed rare-earth deposits, but no processing capacity, a 200-day construction season and a labour force of 27,000. On current prices, Kvanefjeld-class projects need a decade of committed offtake before they fund a state budget. Sovereignty does not shorten that.',
+      claim:'Greenlandic mineral revenue cannot replace the Danish block grant within a decade at current prices.',
+      src:'3 SRC', dots:'●●●○○' },
+
+    { k:'check', t:47.5,
+      body:'After 5 contributions, 117 audience comments and 13 sources: the panel agrees on decision rights and on rising Arctic defence investment, and has narrowed the security dispute from sovereignty to tenure. Resource ownership and the economics of independence remain open.',
+      pause:'Session paused for review · panel will resume after synthesis' }
+  ];
+
+  var STATS = [
+    ['9', 'panel contributions'], ['117', 'audience comments clustered'], ['13', 'sources cited'],
+    ['1', 'participant changed position'], ['1', 'perspectives added mid-debate'], ['4', 'disagreements still fundamental']
+  ];
+
+  var AGREE = [
+    ['Greenlanders must ultimately determine Greenland’s political status.', 'Traces to: Jens 14:02 · Christian 14:09 · Maya 14:17'],
+    ['Arctic defence investment will increase regardless of the sovereignty question.', 'Traces to: Maya 14:05 · Sarah 14:14'],
+    ['Mineral development cannot fund independence on the current timeline.', 'Traces to: Elena 14:24 · uncontested by 4 participants']
+  ];
+
+  var FUND = [
+    ['Whether security tenure requires title, or only guarantees.', 'Interest conflict · narrowed, not resolved'],
+    ['Who holds ownership of subsurface resources during transition.', 'Value + interest · unmoved'],
+    ['Whether an alliance may condition support on a status outcome.', 'Value disagreement'],
+    ['Whether fiscal dependence limits the exercise of self-determination.', 'Forecast + value']
+  ];
+
+  var STILL = [
+    ['What notice period applies to withdrawal under the 2004 amendment?', 'Resolvable · source requested from Christian'],
+    ['What processing capacity would a viable rare-earth chain require?', 'Resolvable · no participant has retrieved this']
+  ];
+
+  var TAX = [
+    ['Factual disagreement', 'Potentially resolvable with evidence', [
+      ['Can existing treaties accommodate the required radar and space-surveillance installations?', '3 sources · Christian vs Maya · narrowing'],
+      ['Does any comparable capability exist without sovereignty transfer?', '2 sources · Sarah · largely settled']
+    ]],
+    ['Forecast disagreement', 'Resolvable only over time', [
+      ['Would US investment substantially increase Greenlandic prosperity?', 'Probabilistic · Naja vs Maya'],
+      ['Can mineral revenue replace the Danish block grant within a decade?', 'Elena: unlikely · contested by Naja']
+    ]],
+    ['Value disagreement', 'Evidence cannot resolve this', [
+      ['Should strategic security ever override national self-determination?', 'Jens: never · Maya: under existential threat'],
+      ['Is a 57,000-person electorate the right unit of decision for an Arctic security question?', 'Raised by audience · 22 comments']
+    ]],
+    ['Interest conflict', 'No mutually preferred outcome', [
+      ['Greenland wants control of resource development; the US wants supply certainty.', 'Structural · not a misunderstanding'],
+      ['Denmark wants the Kingdom intact; Greenland wants fiscal independence.', 'Structural · partially tradeable']
+    ]]
+  ];
+
+  /* ==================== timeline ==================== */
+  var SCREENS = [
+    { id:'s-source', name:'01 Source',       start:0,   dur:26 },
+    { id:'s-debate', name:'02 Deliberation', start:26,  dur:60 },
+    { id:'s-map',    name:'03 Synthesis',    start:86,  dur:22 },
+    { id:'s-tax',    name:'04 Taxonomy',     start:108, dur:22 }
+  ];
+  var TOTAL = 130;
+
+  /* ==================== build ==================== */
+  function el(tag, cls, txt) {
+    var d = document.createElement(tag);
+    if (cls) d.className = cls;
+    if (txt != null) d.textContent = txt;
+    return d;
+  }
+  function fade(node, t) { node.classList.add('fade'); node.dataset.t = t; return node; }
+
+  /* --- screen 01 rail --- */
+  var rail = document.getElementById('rail');
+
+  var sec1 = el('div', 'railsec');
+  var h1 = el('div', 'railhead'); h1.appendChild(el('span', 'lbl', 'Claims & questions extracted'));
+  sec1.appendChild(fade(h1, 5.6));
+  EXTRACTED.forEach(function (r, i) {
+    var row = el('div', 'row');
+    row.appendChild(el('div', 'tag' + (r[0] === 'question' ? ' q' : r[0] === 'forecast' ? ' f' : ''), r[0]));
+    row.appendChild(el('div', 'rowtxt', r[1]));
+    sec1.appendChild(fade(row, 6.2 + i * 0.55));
+  });
+  rail.appendChild(sec1);
+
+  var sec2 = el('div', 'railsec');
+  var h2 = el('div', 'railhead'); h2.appendChild(el('span', 'lbl', 'Standing'));
+  sec2.appendChild(fade(h2, 9.6));
+  var two = el('div', 'twocol');
+  STANDING.forEach(function (g, gi) {
+    var col = el('div');
+    col.appendChild(el('div', 'lbl', g[0]));
+    var ul = el('ul', 'stlist');
+    g[1].forEach(function (x) { ul.appendChild(el('li', null, x)); });
+    col.appendChild(ul);
+    two.appendChild(fade(col, 10.1 + gi * 0.6));
+  });
+  sec2.appendChild(two);
+  rail.appendChild(sec2);
+
+  var sec3 = el('div', 'railsec');
+  var h3 = el('div', 'railhead');
+  h3.appendChild(el('span', 'lbl', 'Proposed panel'));
+  h3.appendChild(el('span', 'lbl', 'System-recommended · 5'));
+  sec3.appendChild(fade(h3, 12.6));
+  PANEL.forEach(function (p, i) {
+    var c = el('div', 'persona');
+    var nm = el('div', 'pname');
+    nm.appendChild(el('b', null, p[0]));
+    nm.appendChild(el('span', 'ptag' + (p[1] === 'expertise' ? ' x' : ''), p[1]));
+    c.appendChild(nm);
+    c.appendChild(el('div', 'prole', p[2]));
+    c.appendChild(el('div', 'pmandate', 'Mandate: ' + p[3]));
+    sec3.appendChild(fade(c, 13.2 + i * 0.7));
+  });
+  rail.appendChild(sec3);
+
+  rail.appendChild(fade(el('div', 'disclaim',
+    'Participants are constructed personas with explicit mandates, assumptions and evidence bases. They are not simulations of real individuals.'), 18.0));
+
+  var openBtn = el('button', 'openroom', 'Open deliberation room →');
+  openBtn.type = 'button';
+  rail.appendChild(fade(openBtn, 19.2));
+
+  /* --- screen 02 feed --- */
+  var feed = document.getElementById('feed');
+  var feedNodes = [];
+
+  FEED.forEach(function (F) {
+    var node;
+    if (F.k === 'entry') {
+      node = el('div', 'entry');
+      var hd = el('div', 'ehead');
+      hd.appendChild(el('span', 'av lit', F.ini));
+      hd.appendChild(el('span', 'who', F.who));
+      hd.appendChild(el('span', 'role', F.role));
+      hd.appendChild(el('span', 'ts', F.ts));
+      node.appendChild(hd);
+      node.appendChild(el('div', 'etext', F.text));
+      var cb = el('div', 'claimbox');
+      cb.appendChild(el('span', 'lbl', 'Claim'));
+      cb.appendChild(el('div', 'ct', F.claim));
+      node.appendChild(cb);
+      var sr = el('div', 'srcrow');
+      var s = el('span', 'src', F.src + ' ');
+      s.appendChild(el('span', 'dots', F.dots));
+      sr.appendChild(s);
+      var ab = el('button', 'attach', '+ Attach question'); ab.type = 'button';
+      sr.appendChild(ab);
+      node.appendChild(sr);
+      node.appendChild(el('div', 'attached', '↳ 4 attached questions'));
+    } else if (F.k === 'emerging') {
+      node = el('div', 'sys');
+      var eh = el('div', 'syshead');
+      eh.appendChild(el('span', 'lbl', 'Emerging question'));
+      eh.appendChild(el('span', 'ts mono', F.ts));
+      node.appendChild(eh);
+      node.appendChild(el('div', 'sysq', F.q));
+      node.appendChild(el('div', 'sysmeta', F.meta));
+      node.appendChild(el('div', 'sysmeta', F.pause));
+    } else if (F.k === 'position') {
+      node = el('div', 'sys flat');
+      var ph = el('div', 'syshead');
+      ph.appendChild(el('span', 'lbl', 'Position updated'));
+      ph.appendChild(el('span', 'role', F.who));
+      node.appendChild(ph);
+      var vr = el('div', 'viewrow');
+      var v1 = el('div', 'view old');
+      v1.appendChild(el('span', 'lbl', 'Initial view'));
+      v1.appendChild(el('p', null, F.old));
+      var v2 = el('div', 'view');
+      v2.appendChild(el('span', 'lbl', 'Revised view'));
+      v2.appendChild(el('p', null, F.neu));
+      vr.appendChild(v1); vr.appendChild(v2);
+      node.appendChild(vr);
+      node.appendChild(el('div', 'because', F.because));
+    } else if (F.k === 'gap') {
+      node = el('div', 'sys warn');
+      var gh = el('div', 'syshead');
+      gh.appendChild(el('span', 'lbl', 'Perspective gap detected'));
+      node.appendChild(gh);
+      node.appendChild(el('div', 'sysbody', F.body));
+      var pc = el('div', 'persona');
+      var pn = el('div', 'pname');
+      pn.appendChild(el('b', null, F.name));
+      pc.appendChild(pn);
+      pc.appendChild(el('div', 'prole', F.role));
+      pc.appendChild(el('div', 'pmandate', 'Mandate: ' + F.mandate));
+      node.appendChild(pc);
+      var iv = el('div', 'invite');
+      var yes = el('button', 'vbtn', 'Invite'); yes.type = 'button';
+      var no = el('button', 'vbtn no', 'Not needed'); no.type = 'button';
+      var tally = el('span', 'tally', 'Voting open · 214 for · 38 against');
+      iv.appendChild(yes); iv.appendChild(no); iv.appendChild(tally);
+      node.appendChild(iv);
+      node._tally = tally;
+    } else {
+      node = el('div', 'sys');
+      var ch = el('div', 'syshead');
+      ch.appendChild(el('span', 'lbl', 'Synthesis checkpoint'));
+      node.appendChild(ch);
+      node.appendChild(el('div', 'sysbody', F.body));
+      var sb = el('button', 'syn', 'Open full synthesis →'); sb.type = 'button';
+      node.appendChild(sb);
+      node.appendChild(el('div', 'sysmeta', F.pause));
+      node._syn = sb;
+    }
+    node.classList.add('fade');
+    feed.appendChild(node);
+    feedNodes.push({ F:F, node:node });
+  });
+
+  /* --- sidebar, rendered into all three panes --- */
+  function buildSide(host) {
+    var parts = [], bars = [];
+
+    var s1 = el('div', 'sidesec');
+    s1.appendChild(el('div', 'lbl', 'Participants'));
+    PEOPLE.forEach(function (p) {
+      var r = el('div', 'part');
+      var a = el('span', 'av', p[0]);
+      var n = el('span', 'pn', p[1]);
+      n.appendChild(el('span', null, p[2]));
+      var c = el('span', 'pc', '0');
+      r.appendChild(a); r.appendChild(n); r.appendChild(c);
+      s1.appendChild(r);
+      parts.push({ row:r, av:a, count:c, total:p[3] });
+    });
+    host.appendChild(s1);
+
+    var s2 = el('div', 'sidesec');
+    s2.appendChild(el('div', 'lbl', 'Live issues'));
+    ISSUES.forEach(function (q) {
+      var w = el('div', 'issue');
+      w.appendChild(el('div', 'q', q[0]));
+      var b = el('div', 'bar');
+      var i = el('i'); i.style.width = '0%';
+      var e = el('em', null, '0 comments');
+      b.appendChild(i); b.appendChild(e);
+      w.appendChild(b);
+      s2.appendChild(w);
+      bars.push({ fill:i, label:e, n:q[1], w:q[2] });
+    });
+    host.appendChild(s2);
+
+    var s3 = el('div', 'sidesec');
+    s3.appendChild(el('div', 'lbl', 'Areas of agreement'));
+    [['Greenlanders must ultimately determine political status'], ['Arctic defence investment will increase']].forEach(function (a) {
+      var r = el('div', 'agree');
+      r.appendChild(el('b', null, '✓'));
+      r.appendChild(el('span', null, a[0]));
+      s3.appendChild(r);
+    });
+    host.appendChild(s3);
+
+    var s4 = el('div', 'sidesec');
+    var h = el('div', 'railhead');
+    h.appendChild(el('span', 'lbl', 'Unresolved'));
+    var ml = el('button', 'maplink', 'Map →'); ml.type = 'button';
+    h.appendChild(ml);
+    s4.appendChild(h);
+    ['Sovereignty vs. security tenure', 'Defence agreement sufficiency', 'Resource ownership'].forEach(function (u) {
+      var r = el('div', 'unres');
+      r.appendChild(el('b', null, '⚡︎'));
+      r.appendChild(el('span', null, u));
+      s4.appendChild(r);
+    });
+    host.appendChild(s4);
+
+    return { parts:parts, bars:bars, map:ml };
+  }
+  var sides = [
+    buildSide(document.getElementById('side1')),
+    buildSide(document.getElementById('side2')),
+    buildSide(document.getElementById('side3'))
+  ];
+
+  /* --- screen 03 synthesis --- */
+  var mapBody = document.getElementById('mapbody');
+  var br = el('div', 'backrow');
+  var backBtn = el('button', 'back', '← Back to debate'); backBtn.type = 'button';
+  br.appendChild(backBtn);
+  br.appendChild(el('span', 'lbl', 'Synthesis · 9 contributions · 117 comments · 13 sources'));
+  mapBody.appendChild(br);
+  mapBody.appendChild(fade(el('h2', 'maptitle', 'The output is the map, not the transcript.'), 0.5));
+
+  var statwrap = el('div', 'stats');
+  STATS.forEach(function (s, i) {
+    var c = el('div', 'stat');
+    c.appendChild(el('b', null, s[0]));
+    c.appendChild(el('span', null, s[1]));
+    statwrap.appendChild(fade(c, 1.0 + i * 0.28));
+  });
+  mapBody.appendChild(statwrap);
+
+  function mapSection(title, rows, glyph, cls, t0) {
+    var s = el('div', 'mapsec');
+    s.appendChild(fade(el('div', 'lbl', title), t0));
+    rows.forEach(function (r, i) {
+      var it = el('div', 'item');
+      it.appendChild(el('div', 'gl' + (cls ? ' ' + cls : ''), glyph === '⚡' ? '⚡︎' : glyph));
+      var b = el('div');
+      b.appendChild(el('div', 'itt', r[0]));
+      b.appendChild(el('div', 'itm', r[1]));
+      it.appendChild(b);
+      s.appendChild(fade(it, t0 + 0.45 + i * 0.5));
+    });
+    mapBody.appendChild(s);
+  }
+  mapSection('Areas of agreement · 3', AGREE, '✓', '', 3.2);
+  mapSection('Fundamental disagreements · 4', FUND, '⚡', 'warn', 6.4);
+  mapSection('Still open · 2 factual questions', STILL, '?', 'q', 10.6);
+
+  /* --- screen 04 taxonomy --- */
+  var taxBody = document.getElementById('taxbody');
+  var tbr = el('div', 'backrow');
+  var backBtn2 = el('button', 'back', '← Back to debate'); backBtn2.type = 'button';
+  tbr.appendChild(backBtn2);
+  taxBody.appendChild(tbr);
+  taxBody.appendChild(fade(el('h2', 'maptitle', 'What kind of disagreement is this?'), 0.4));
+  taxBody.appendChild(fade(el('p', 'taxintro',
+    'Every open dispute is classified by what could resolve it. Evidence settles the first group, time settles the second, and nothing settles the last two.'), 0.9));
+  TAX.forEach(function (g, gi) {
+    var w = el('div', 'taxgrp');
+    var h = el('div', 'taxhead');
+    h.appendChild(el('span', 'k', g[0]));
+    h.appendChild(el('span', 'v', g[1]));
+    w.appendChild(fade(h, 1.8 + gi * 2.1));
+    g[2].forEach(function (r, i) {
+      var it = el('div', 'item');
+      it.appendChild(el('div', 'gl' + (gi >= 2 ? ' warn' : ''), gi >= 2 ? '⚡︎' : '?'));
+      var b = el('div');
+      b.appendChild(el('div', 'itt', r[0]));
+      b.appendChild(el('div', 'itm', r[1]));
+      it.appendChild(b);
+      w.appendChild(fade(it, 2.3 + gi * 2.1 + i * 0.55));
+    });
+    taxBody.appendChild(w);
+  });
+
+  /* ==================== render ==================== */
+  var headmid = document.getElementById('headmid');
+  var srcText = document.getElementById('srctext');
+  var srcCur = document.getElementById('srccur');
+  var runBtn = document.getElementById('runbtn');
+  var screens = SCREENS.map(function (s) { return document.getElementById(s.id); });
+  var panes = [].slice.call(document.querySelectorAll('.pane'));
+  var lastScreen = -1;
+
+  function setHead(mode) {
+    if (headmid._mode === mode) return;
+    headmid._mode = mode;
+    headmid.innerHTML = '';
+    if (mode === 'source') {
+      headmid.appendChild(el('div', 'tagline', 'A living map of disagreement.'));
+    } else {
+      headmid.appendChild(el('div', 'headtitle', 'US administration revives proposal to acquire Greenland'));
+      headmid.appendChild(el('div', 'headmeta', 'Sample source · 31 Aug 2026 · 5 claims · 2 questions extracted'));
+    }
+  }
+
+  function showFades(root, local) {
+    var list = root.querySelectorAll('.fade');
+    for (var i = 0; i < list.length; i++) {
+      var at = parseFloat(list[i].dataset.t || '0');
+      list[i].classList.toggle('in', local >= at);
+    }
+  }
+
+  /* Bring the newest revealed element just into view -- not a slam to the
+     bottom, so the top of a screen stays readable until it has to move. Only
+     while playing: a paused viewer scrolls for themselves. */
+  function follow(pane, sel) {
+    if (!playing) return;
+    if (pane.clientHeight === 0 || getComputedStyle(pane).overflowY !== 'auto') return;
+    var shown = pane.querySelectorAll(sel);
+    if (!shown.length) { pane.scrollTop = 0; return; }
+    var lastEl = shown[shown.length - 1];
+    var want = lastEl.offsetTop + lastEl.offsetHeight + 22 - pane.clientHeight;
+    pane.scrollTop = clamp(want, 0, pane.scrollHeight);
+  }
+
+  function screenAt(T) {
+    var idx = 0;
+    for (var i = 0; i < SCREENS.length; i++) if (T >= SCREENS[i].start) idx = i;
+    return idx;
+  }
+
+  function render(T) {
+    var si = screenAt(T);
+    var S = SCREENS[si];
+    var local = T - S.start;
+
+    if (si !== lastScreen) {
+      lastScreen = si;
+      panes.forEach(function (pn) { pn.scrollTop = 0; });
+    }
+    screens.forEach(function (el2, i) { el2.classList.toggle('on', i === si); });
+    setHead(si === 0 ? 'source' : 'debate');
+
+    if (si === 0) {
+      /* the source types itself in, then the analysis runs */
+      var typed = clamp(Math.floor((local - 2.2) * 95), 0, SOURCE_TEXT.length);
+      srcText.textContent = SOURCE_TEXT.slice(0, typed);
+      srcCur.style.display = (local > 2.0 && typed < SOURCE_TEXT.length) ? 'inline-block' : 'none';
+      var ran = local >= 5.0;
+      runBtn.classList.toggle('done', ran);
+      runBtn.textContent = ran ? 'Re-analyse source' : 'Extract claims & compose panel';
+      showFades(screens[0], local);
+      follow(screens[0].querySelector('.pane'), '.fade.in');
+    }
+
+    if (si >= 1) {
+      /* the deliberation feed advances on screen 02's clock and then holds */
+      var d = si === 1 ? local : SCREENS[1].dur;
+      var landed = 0;
+      feedNodes.forEach(function (n) {
+        var on = d >= n.F.t;
+        n.node.style.display = on ? 'block' : 'none';
+        n.node.classList.toggle('in', d >= n.F.t + 0.15);
+        if (on && n.F.k === 'entry') landed++;
+        if (n.F.k === 'gap' && n.node._tally) {
+          var voted = d >= n.F.vote;
+          n.node._tally.textContent = voted ? 'Invited · 214 for · 38 against' : 'Voting open · 214 for · 38 against';
+          n.node._tally.classList.toggle('done', voted);
+        }
+      });
+
+      /* the sidebar fills as contributions land */
+      var prog = clamp(d / 48, 0, 1);
+      sides.forEach(function (sd) {
+        sd.parts.forEach(function (p, pi) {
+          var active = pi < Math.min(landed + 1, PEOPLE.length);
+          var n = Math.round(p.total * (pi === 5 ? clamp((d - 41.5) / 3, 0, 1) : prog));
+          p.count.textContent = active ? n : 0;
+          p.row.style.opacity = active ? 1 : 0.35;
+          p.av.classList.toggle('lit', active && n > 0);
+        });
+        sd.bars.forEach(function (b) {
+          b.fill.style.width = (b.w * 100 * prog) + '%';
+          b.label.textContent = Math.round(b.n * prog) + ' comments';
+        });
+      });
+
+      if (si === 1) follow(screens[1].querySelector('.feed'), '.fade.in');
+    }
+
+    if (si === 2) { showFades(screens[2], local); follow(screens[2].querySelector('.pane'), '.fade.in'); }
+    if (si === 3) { showFades(screens[3], local); follow(screens[3].querySelector('.pane'), '.fade.in'); }
+
+    jumps.forEach(function (b, i) { b.setAttribute('aria-current', i === si ? 'true' : 'false'); });
+  }
+
+  /* ==================== playback ==================== */
+  var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var T = 0, playing = !reduced, last = null;
+  var playBtn = document.getElementById('play');
+  var paceBtn = document.getElementById('pace');
+  var scrub = document.getElementById('scrub');
+  var cue = document.getElementById('cue');
+  var jumps = [].slice.call(document.querySelectorAll('[data-jump]'));
+
+  function stamp() {
+    cue.textContent = T.toFixed(1) + 's · ' + SCREENS[screenAt(T)].name;
+    scrub.value = Math.round((T / TOTAL) * 1000);
+  }
+  function setPlaying(v) {
+    playing = v;
+    playBtn.textContent = v ? 'Pause' : 'Play';
+    paceBtn.classList.toggle('held', !v);
+    paceBtn.innerHTML = v ? '&#10073;&#10073; Hold pace' : '&#9654; Resume';
+  }
+  function goto(t) { T = clamp(t, 0, TOTAL - 0.01); render(T); stamp(); }
+
+  function frame(ts) {
+    if (last == null) last = ts;
+    var dt = (ts - last) / 1000; last = ts;
+    if (playing) { T = (T + dt) % TOTAL; render(T); stamp(); }
+    requestAnimationFrame(frame);
+  }
+
+  playBtn.addEventListener('click', function () { setPlaying(!playing); });
+  paceBtn.addEventListener('click', function () { setPlaying(!playing); });
+  scrub.addEventListener('input', function () { setPlaying(false); goto((scrub.value / 1000) * TOTAL); });
+  jumps.forEach(function (b, i) {
+    b.addEventListener('click', function () { goto(SCREENS[i].start + 0.01); });
+  });
+  openBtn.addEventListener('click', function () { goto(SCREENS[1].start + 0.01); });
+  backBtn.addEventListener('click', function () { goto(SCREENS[1].start + SCREENS[1].dur - 2); });
+  backBtn2.addEventListener('click', function () { goto(SCREENS[1].start + SCREENS[1].dur - 2); });
+  sides[0].map.addEventListener('click', function () { goto(SCREENS[2].start + 0.01); });
+  sides[1].map.addEventListener('click', function () { goto(SCREENS[3].start + 0.01); });
+  sides[2].map.addEventListener('click', function () { goto(SCREENS[2].start + 0.01); });
+  feedNodes.forEach(function (n) {
+    if (n.node._syn) n.node._syn.addEventListener('click', function () { goto(SCREENS[2].start + 0.01); });
+  });
+  window.addEventListener('resize', function () { render(T); });
+
+  setPlaying(!reduced);
+  if (reduced) { T = SCREENS[1].start + 50; }
+  render(T); stamp();
+  requestAnimationFrame(frame);
+})();
+</script>
+
+<script>
+(function () {
+  var root = document.documentElement, KEY = 'agora-theme';
+  var btn = document.getElementById('theme');
+  try { var t = localStorage.getItem(KEY); if (t) root.setAttribute('data-theme', t); } catch (e) {}
+  function isDark() {
+    var set = root.getAttribute('data-theme');
+    if (set) return set === 'dark';
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  function label() { btn.textContent = isDark() ? 'Light' : 'Dark'; }
+  btn.addEventListener('click', function () {
+    var next = isDark() ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem(KEY, next); } catch (e) {}
+    label();
+  });
+  label();
+})();
+</script>
+</body>
+</html>
